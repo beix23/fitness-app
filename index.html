@@ -508,6 +508,37 @@ function showToast(msg) {
 }
 
 // ============================================================
+// 1RM 估算 & 对比
+// ============================================================
+function calc1RM(weight, reps) {
+  if (reps === 1) return weight;
+  if (reps <= 10) return Math.round(weight * 36 / (37 - reps) * 10) / 10;
+  return Math.round(weight * (1 + reps / 30) * 10) / 10;
+}
+
+function getBest1RM(exercise) {
+  if (!exercise.sets.length) return 0;
+  return Math.max(...exercise.sets.map(s => calc1RM(s.weight, s.reps)));
+}
+
+function getVolume(exercise) {
+  return exercise.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+}
+
+function findPrevWorkout(exerciseId) {
+  const today = getToday();
+  const dates = Object.keys(workouts).filter(d => d < today).sort().reverse();
+  for (const d of dates) {
+    const w = workouts[d];
+    if (w?.exercises) {
+      const ex = w.exercises.find(e => e.id === exerciseId);
+      if (ex && ex.sets.length > 0) return { date: d, exercise: ex };
+    }
+  }
+  return null;
+}
+
+// ============================================================
 // 渲染：训练 Tab
 // ============================================================
 function renderWorkout() {
@@ -528,19 +559,58 @@ function renderWorkout() {
     return;
   }
 
+  // 今日训练总结
+  const todayTotalSets = workout.exercises.reduce((s, ex) => s + ex.sets.length, 0);
+  const todayBest1RMs = workout.exercises.filter(ex => ex.sets.length > 0).map(ex => getBest1RM(ex));
+
   let html = `<button class="btn btn-outline btn-sm" style="margin-bottom:12px" onclick="openPicker()">+ 添加动作</button>`;
+
+  if (todayTotalSets > 0) {
+    html += `<div class="card" style="padding:12px 16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+        <span style="color:var(--text2)">今日已完成 <b style="color:var(--text)">${todayTotalSets}</b> 组</span>
+        ${todayBest1RMs.length > 0 ? `<span style="color:var(--text2)">最佳1RM合计 <b style="color:var(--green)">${todayBest1RMs.reduce((a,b)=>a+b,0).toFixed(0)}</b> kg</span>` : ''}
+      </div>
+    </div>`;
+  }
+
   workout.exercises.forEach((ex, ei) => {
     const doneSets = ex.sets.length;
+    const best1RM = doneSets > 0 ? getBest1RM(ex) : 0;
+    const volume = doneSets > 0 ? getVolume(ex) : 0;
+
+    // 查找上次相同动作
+    const prev = findPrevWorkout(ex.id);
+    let comparisonHTML = '';
+    if (prev) {
+      const prev1RM = getBest1RM(prev.exercise);
+      const prevVolume = getVolume(prev.exercise);
+      if (best1RM > 0 && prev1RM > 0) {
+        const diff = best1RM - prev1RM;
+        const pct = ((diff / prev1RM) * 100);
+        const up = diff >= 0;
+        const volDiff = volume - prevVolume;
+        const volUp = volDiff >= 0;
+        comparisonHTML = `<div style="padding:4px 16px 10px;font-size:12px;display:flex;gap:14px">
+          <span style="color:var(--text3)">1RM <b style="color:${up ? 'var(--green)' : 'var(--red)'}">${best1RM}kg ${up ? '↑' : '↓'}${Math.abs(diff).toFixed(1)}kg (${up ? '+' : ''}${pct.toFixed(0)}%)</b></span>
+          <span style="color:var(--text3)">容量 <b style="color:${volUp ? 'var(--green)' : 'var(--red)'}">${volume}kg ${volUp ? '↑' : '↓'}${Math.abs(volDiff)}kg</b></span>
+          <span style="color:var(--text3)">上次 ${formatDate(prev.date)}</span>
+        </div>`;
+      }
+    }
+
     html += `<div class="exercise-card open" id="ex-${ei}">
       <div class="head" onclick="toggleExercise(${ei})">
         <span class="name">${ex.name}</span>
-        <span class="meta">${doneSets} 组 · ${ex.maxWeight || 0}kg</span>
+        <span class="meta">${doneSets} 组${best1RM > 0 ? ` · 1RM ${best1RM}kg` : ''}${ex.maxWeight > 0 ? ` · 最大 ${ex.maxWeight}kg` : ''}</span>
       </div>
+      ${comparisonHTML}
       <div class="body">`;
     ex.sets.forEach((s, si) => {
+      const rm = calc1RM(s.weight, s.reps);
       html += `<div class="set-row">
         <span class="idx">#${si + 1}</span>
-        <span class="val">${s.weight} kg × ${s.reps} 次</span>
+        <span class="val">${s.weight} kg × ${s.reps} 次 <span style="color:var(--text3);font-size:11px">≈${rm}kg</span></span>
         <span class="del" onclick="deleteSet(${ei},${si});event.stopPropagation()">✕</span>
       </div>`;
     });
