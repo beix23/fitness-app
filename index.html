@@ -323,27 +323,72 @@ nav button.active { color: var(--green); }
 // 动作库
 // ============================================================
 const EXERCISE_LIBRARY = [
+  // 胸部
   { id: 'flat-bench', name: '平板杠铃卧推', category: '胸部', rest: 120 },
+  { id: 'incline-bench', name: '上斜杠铃卧推', category: '胸部', rest: 120 },
+  { id: 'decline-bench', name: '下斜杠铃卧推', category: '胸部', rest: 120 },
+  { id: 'flat-db-press', name: '平板哑铃卧推', category: '胸部', rest: 90 },
   { id: 'incline-db', name: '上斜哑铃卧推', category: '胸部', rest: 90 },
+  { id: 'decline-db', name: '下斜哑铃卧推', category: '胸部', rest: 90 },
   { id: 'dips', name: '双杠臂屈伸', category: '胸部', rest: 90 },
   { id: 'db-fly', name: '哑铃飞鸟', category: '胸部', rest: 90 },
   { id: 'cable-fly', name: '绳索夹胸', category: '胸部', rest: 60 },
+  { id: 'machine-press', name: '器械推胸', category: '胸部', rest: 90 },
+  { id: 'smith-bench', name: '史密斯卧推', category: '胸部', rest: 120 },
+  { id: 'pushup', name: '俯卧撑', category: '胸部', rest: 60 },
+  // 肩部
   { id: 'ohp', name: '杠铃推举', category: '肩部', rest: 120 },
+  { id: 'db-press', name: '哑铃推举', category: '肩部', rest: 90 },
+  { id: 'smith-ohp', name: '史密斯推举', category: '肩部', rest: 120 },
   { id: 'lateral-raise', name: '哑铃侧平举', category: '肩部', rest: 60 },
-  { id: 'face-pull', name: '面拉', category: '肩部', rest: 60 },
+  { id: 'cable-lateral', name: '绳索侧平举', category: '肩部', rest: 60 },
   { id: 'front-raise', name: '哑铃前平举', category: '肩部', rest: 60 },
   { id: 'arnold-press', name: '阿诺德推举', category: '肩部', rest: 90 },
+  { id: 'face-pull', name: '面拉', category: '肩部', rest: 60 },
+  { id: 'rear-delt-fly', name: '俯身反向飞鸟', category: '肩部', rest: 60 },
+  { id: 'upright-row', name: '杠铃提拉', category: '肩部', rest: 90 },
+  // 背部
   { id: 'pull-up', name: '引体向上', category: '背部', rest: 120 },
+  { id: 'assisted-pullup', name: '辅助引体向上', category: '背部', rest: 90 },
   { id: 'barbell-row', name: '杠铃划船', category: '背部', rest: 120 },
+  { id: 'db-row', name: '哑铃单臂划船', category: '背部', rest: 90 },
+  { id: 't-bar-row', name: 'T杠划船', category: '背部', rest: 120 },
   { id: 'lat-pulldown', name: '高位下拉', category: '背部', rest: 90 },
   { id: 'seated-row', name: '坐姿划船', category: '背部', rest: 90 },
-  { id: 'db-row', name: '哑铃单臂划船', category: '背部', rest: 90 },
-  { id: 'squat', name: '深蹲', category: '腿部', rest: 180 },
-  { id: 'deadlift', name: '硬拉', category: '腿部', rest: 180 },
+  { id: 'straight-arm-pd', name: '直臂下压', category: '背部', rest: 60 },
+  { id: 'deadlift', name: '硬拉', category: '背部', rest: 180 },
+  { id: 'rack-pull', name: '架上硬拉', category: '背部', rest: 180 },
+  { id: 'back-ext', name: '山羊挺身', category: '背部', rest: 60 },
+  // 腿部
+  { id: 'squat', name: '杠铃深蹲', category: '腿部', rest: 180 },
+  { id: 'front-squat', name: '前蹲', category: '腿部', rest: 180 },
+  { id: 'hack-squat', name: '哈克深蹲', category: '腿部', rest: 150 },
+  { id: 'leg-press', name: '腿举', category: '腿部', rest: 150 },
+  { id: 'lunge', name: '负重箭步蹲', category: '腿部', rest: 120 },
+  { id: 'romanian-dl', name: '罗马尼亚硬拉', category: '腿部', rest: 150 },
+  { id: 'leg-extension', name: '腿屈伸', category: '腿部', rest: 90 },
+  { id: 'leg-curl', name: '腿弯举', category: '腿部', rest: 90 },
+  { id: 'hip-thrust', name: '臀推', category: '腿部', rest: 120 },
+  { id: 'calf-raise', name: '站姿提踵', category: '腿部', rest: 60 },
+  // 手臂
   { id: 'barbell-curl', name: '杠铃弯举', category: '手臂', rest: 60 },
-  { id: 'tricep-pd', name: '三头下压', category: '手臂', rest: 60 },
+  { id: 'db-curl', name: '哑铃弯举', category: '手臂', rest: 60 },
+  { id: 'hammer-curl', name: '锤式弯举', category: '手臂', rest: 60 },
+  { id: 'preacher-curl', name: '牧师凳弯举', category: '手臂', rest: 60 },
+  { id: 'cable-curl', name: '绳索弯举', category: '手臂', rest: 60 },
+  { id: 'close-grip-bench', name: '窄距卧推', category: '手臂', rest: 90 },
+  { id: 'tricep-pd', name: '三头绳索下压', category: '手臂', rest: 60 },
+  { id: 'skull-crusher', name: '仰卧臂屈伸', category: '手臂', rest: 60 },
+  { id: 'overhead-ext', name: '过头臂屈伸', category: '手臂', rest: 60 },
+  // 核心
+  { id: 'crunch', name: '卷腹', category: '核心', rest: 45 },
+  { id: 'leg-raise', name: '悬垂举腿', category: '核心', rest: 60 },
+  { id: 'plank', name: '平板支撑', category: '核心', rest: 60 },
+  { id: 'russian-twist', name: '俄罗斯转体', category: '核心', rest: 45 },
+  { id: 'cable-crunch', name: '绳索卷腹', category: '核心', rest: 60 },
+  { id: 'ab-rollout', name: '健腹轮', category: '核心', rest: 60 },
 ];
-const CATEGORIES = ['胸部', '肩部', '背部', '腿部', '手臂'];
+const CATEGORIES = ['胸部', '肩部', '背部', '腿部', '手臂', '核心'];
 
 // ============================================================
 // 数据层
