@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🏋️</text></svg>">
+<title>健身记录</title>
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --card: #242424;
+  --border: #2e2e2e;
+  --text: #f0f0f0;
+  --text2: #999;
+  --text3: #666;
+  --green: #4CAF50;
+  --green-bg: rgba(76,175,80,0.15);
+  --red: #f44336;
+  --orange: #ff9800;
+  --blue: #2196F3;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+}
+#app {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+header {
+  padding: 12px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+header h1 { font-size: 20px; font-weight: 700; }
+header .date { font-size: 14px; color: var(--text2); }
+
+/* Main content */
+main { flex: 1; overflow-y: auto; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+main::-webkit-scrollbar { display: none; }
+
+/* Bottom Nav */
+nav {
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
+  flex-shrink: 0;
+}
+nav button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 11px;
+  padding: 8px 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+nav button .icon { font-size: 22px; }
+nav button.active { color: var(--green); }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.card-title { font-size: 15px; font-weight: 600; }
+.card-subtitle { font-size: 12px; color: var(--text2); }
+
+/* Exercise card */
+.exercise-card { background: var(--card); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+.exercise-card .head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer;
+}
+.exercise-card .head .name { font-size: 15px; font-weight: 500; }
+.exercise-card .head .meta { font-size: 12px; color: var(--text2); }
+.exercise-card .body { padding: 0 16px 14px; display: none; }
+.exercise-card.open .body { display: block; }
+
+/* Set list */
+.set-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; font-size: 14px;
+}
+.set-row .idx { color: var(--text3); font-size: 12px; width: 30px; }
+.set-row .val { flex: 1; text-align: center; font-variant-numeric: tabular-nums; font-family: "SF Mono","Menlo",monospace; }
+.set-row .del { color: var(--red); font-size: 16px; padding: 4px 8px; cursor: pointer; opacity: 0.5; }
+.set-row .del:active { opacity: 1; }
+
+/* Set input */
+.set-input-row {
+  display: flex; gap: 8px; align-items: center; margin-top: 8px;
+}
+.set-input-row input {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-size: 15px; padding: 10px 12px; text-align: center; outline: none;
+  font-family: "SF Mono","Menlo",monospace;
+}
+.set-input-row input:focus { border-color: var(--green); }
+.set-input-row .w { flex: 1; }
+.set-input-row .r { width: 72px; }
+.set-input-row .btn-done {
+  background: var(--green); border: none; color: #fff; font-size: 15px; font-weight: 600;
+  padding: 10px 16px; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap;
+}
+.set-input-row .btn-done:active { opacity: 0.8; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer; transition: opacity 0.15s;
+}
+.btn:active { opacity: 0.8; }
+.btn-primary { background: var(--green); color: #fff; width: 100%; }
+.btn-outline { background: none; border: 1px solid var(--border); color: var(--text); width: 100%; }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-danger { background: var(--red); color: #fff; }
+
+/* Empty state */
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center; gap: 12px;
+}
+.empty .icon { font-size: 56px; opacity: 0.3; }
+.empty .msg { font-size: 14px; color: var(--text2); }
+
+/* Calendar */
+.cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 16px; }
+.cal-nav .month { font-size: 16px; font-weight: 600; }
+.cal-nav button {
+  background: var(--card); border: none; color: var(--text); font-size: 18px;
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.cal-nav button:active { background: var(--border); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 2px; }
+.cal-grid .day-hdr { font-size: 12px; color: var(--text3); padding: 8px 0; }
+.cal-grid .day {
+  aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 14px; cursor: pointer; position: relative;
+}
+.cal-grid .day.today { background: var(--green-bg); color: var(--green); font-weight: 700; }
+.cal-grid .day.other { color: var(--text3); }
+.cal-grid .day .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--green);
+  position: absolute; bottom: 4px;
+}
+.cal-grid .day:active { background: var(--border); }
+
+/* Day detail */
+.day-detail { margin-top: 16px; }
+.day-detail .ex-summary {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+}
+.day-detail .ex-summary .sets { color: var(--text2); font-size: 13px; }
+
+/* History */
+.history-group { margin-bottom: 20px; }
+.history-group h3 { font-size: 13px; color: var(--text2); margin-bottom: 8px; padding-left: 4px; }
+.history-item { background: var(--card); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; cursor: pointer; }
+.history-item .top { display: flex; justify-content: space-between; align-items: center; }
+.history-item .date-label { font-size: 15px; font-weight: 500; }
+.history-item .summary { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.history-item .arrow { color: var(--text3); transition: transform 0.2s; }
+.history-item.open .arrow { transform: rotate(180deg); }
+.history-detail { display: none; margin-top: 10px; }
+.history-item.open .history-detail { display: block; }
+
+/* Modal overlay */
+.overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: fadeIn 0.2s;
+}
+.overlay .sheet {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 480px; max-height: 80vh;
+  overflow-y: auto; padding: 0 16px var(--safe-bottom);
+  animation: slideUp 0.25s ease-out;
+}
+.sheet h3 { font-size: 17px; text-align: center; padding: 16px 0; }
+.sheet .category { margin-bottom: 16px; }
+.sheet .category .cat-name { font-size: 12px; color: var(--text2); margin-bottom: 6px; padding-left: 4px; }
+.sheet .ex-option {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  background: var(--card); border-radius: var(--radius-sm); margin-bottom: 6px; cursor: pointer;
+}
+.sheet .ex-option.selected { background: var(--green-bg); border: 1px solid var(--green); }
+.sheet .ex-option .check {
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;
+}
+.sheet .ex-option.selected .check { background: var(--green); border-color: var(--green); color: #fff; }
+.sheet .ex-option .ex-name { font-size: 14px; flex: 1; }
+
+/* Rest Timer Overlay */
+.timer-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.92); z-index: 200;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 24px;
+}
+.timer-overlay.hidden { display: none; }
+.timer-ring {
+  width: 200px; height: 200px; position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.timer-ring .bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.timer-ring .fg { fill: none; stroke: var(--green); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.3s linear; }
+.timer-ring .time { position: absolute; font-size: 48px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: "SF Mono","Menlo",monospace; }
+.timer-ring .label { position: absolute; bottom: 38px; font-size: 13px; color: var(--text2); }
+.timer-btns { display: flex; gap: 12px; }
+.timer-btns button {
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  font-size: 15px; padding: 12px 20px; border-radius: var(--radius-sm); cursor: pointer; min-width: 70px;
+}
+.timer-btns button:active { background: var(--border); }
+.timer-btns .btn-skip { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: var(--green); color: #fff; font-size: 14px; font-weight: 600;
+  padding: 10px 24px; border-radius: 20px; z-index: 300;
+  animation: fadeIn 0.2s; pointer-events: none;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 id="headerTitle">今日训练</h1>
+    <span class="date" id="headerDate"></span>
+  </header>
+
+  <main>
+    <!-- 训练 Tab -->
+    <section id="tab-workout"></section>
+    <!-- 日历 Tab -->
+    <section id="tab-calendar" style="display:none"></section>
+    <!-- 记录 Tab -->
+    <section id="tab-history" style="display:none"></section>
+  </main>
+
+  <nav>
+    <button data-tab="workout" class="active"><span class="icon">🏋️</span>训练</button>
+    <button data-tab="calendar"><span class="icon">📅</span>日历</button>
+    <button data-tab="history"><span class="icon">📊</span>记录</button>
+  </nav>
+
+  <!-- Exercise Picker -->
+  <div id="pickerOverlay" class="overlay" style="display:none">
+    <div class="sheet" id="pickerSheet"></div>
+  </div>
+
+  <!-- Rest Timer -->
+  <div id="timerOverlay" class="timer-overlay hidden">
+    <div class="timer-ring">
+      <svg viewBox="0 0 100 100">
+        <circle class="bg" cx="50" cy="50" r="45"/>
+        <circle class="fg" id="timerCircle" cx="50" cy="50" r="45" stroke-dasharray="282.74" stroke-dashoffset="0"/>
+      </svg>
+      <span class="time" id="timerDisplay">90</span>
+      <span class="label">秒</span>
+    </div>
+    <span style="font-size:15px;color:var(--text2)" id="timerExerciseName"></span>
+    <div class="timer-btns">
+      <button onclick="adjustTimer(30)">+30s</button>
+      <button onclick="pauseTimer()" id="btnPause">暂停</button>
+      <button class="btn-skip" onclick="stopTimer()">跳过</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 动作库
+// ============================================================
+const EXERCISE_LIBRARY = [
+  { id: 'flat-bench', name: '平板杠铃卧推', category: '胸部', rest: 120 },
+  { id: 'incline-db', name: '上斜哑铃卧推', category: '胸部', rest: 90 },
+  { id: 'dips', name: '双杠臂屈伸', category: '胸部', rest: 90 },
+  { id: 'db-fly', name: '哑铃飞鸟', category: '胸部', rest: 90 },
+  { id: 'cable-fly', name: '绳索夹胸', category: '胸部', rest: 60 },
+  { id: 'ohp', name: '杠铃推举', category: '肩部', rest: 120 },
+  { id: 'lateral-raise', name: '哑铃侧平举', category: '肩部', rest: 60 },
+  { id: 'face-pull', name: '面拉', category: '肩部', rest: 60 },
+  { id: 'front-raise', name: '哑铃前平举', category: '肩部', rest: 60 },
+  { id: 'arnold-press', name: '阿诺德推举', category: '肩部', rest: 90 },
+  { id: 'pull-up', name: '引体向上', category: '背部', rest: 120 },
+  { id: 'barbell-row', name: '杠铃划船', category: '背部', rest: 120 },
+  { id: 'lat-pulldown', name: '高位下拉', category: '背部', rest: 90 },
+  { id: 'seated-row', name: '坐姿划船', category: '背部', rest: 90 },
+  { id: 'db-row', name: '哑铃单臂划船', category: '背部', rest: 90 },
+  { id: 'squat', name: '深蹲', category: '腿部', rest: 180 },
+  { id: 'deadlift', name: '硬拉', category: '腿部', rest: 180 },
+  { id: 'barbell-curl', name: '杠铃弯举', category: '手臂', rest: 60 },
+  { id: 'tricep-pd', name: '三头下压', category: '手臂', rest: 60 },
+];
+const CATEGORIES = ['胸部', '肩部', '背部', '腿部', '手臂'];
+
+// ============================================================
+// 数据层
+// ============================================================
+const STORAGE_KEY = 'fitness_workouts';
+function loadWorkouts() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveWorkouts(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function getToday() { return new Date().toISOString().slice(0, 10); }
+function formatDate(d) { const [y,m,dd] = d.split('-'); return `${m}月${dd}日`; }
+
+// ============================================================
+// 状态
+// ============================================================
+let workouts = loadWorkouts();
+let currentTab = 'workout';
+let calendarYear = new Date().getFullYear();
+let calendarMonth = new Date().getMonth();
+let selectedDay = null;
+let timerInterval = null;
+let timerRemaining = 90;
+let timerTotal = 90;
+let timerPaused = false;
+let currentExerciseName = '';
+
+// ============================================================
+// 音频
+// ============================================================
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch {}
+}
+function vibrate() {
+  try {
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+  } catch {}
+}
+
+// ============================================================
+// 计时器
+// ============================================================
+function startTimer(seconds, exerciseName) {
+  timerTotal = seconds;
+  timerRemaining = seconds;
+  timerPaused = false;
+  currentExerciseName = exerciseName;
+  document.getElementById('timerOverlay').classList.remove('hidden');
+  document.getElementById('btnPause').textContent = '暂停';
+  updateTimerDisplay();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tick, 1000);
+}
+
+function tick() {
+  if (timerPaused) return;
+  timerRemaining--;
+  updateTimerDisplay();
+  if (timerRemaining <= 0) {
+    clearInterval(timerInterval);
+    beep();
+    vibrate();
+    document.getElementById('timerOverlay').classList.add('hidden');
+    showToast('休息结束！继续下一组');
+  }
+}
+
+function updateTimerDisplay() {
+  document.getElementById('timerDisplay').textContent = timerRemaining;
+  document.getElementById('timerExerciseName').textContent = currentExerciseName;
+  const circ = 282.74;
+  const offset = circ * (1 - timerRemaining / timerTotal);
+  document.getElementById('timerCircle').setAttribute('stroke-dashoffset', offset);
+  if (timerRemaining <= 10) {
+    document.getElementById('timerCircle').style.stroke = 'var(--red)';
+  } else {
+    document.getElementById('timerCircle').style.stroke = 'var(--green)';
+  }
+}
+
+function pauseTimer() {
+  timerPaused = !timerPaused;
+  document.getElementById('btnPause').textContent = timerPaused ? '继续' : '暂停';
+}
+
+function adjustTimer(s) {
+  timerRemaining = Math.max(0, timerRemaining + s);
+  timerTotal = Math.max(timerRemaining, timerTotal + s);
+  updateTimerDisplay();
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  document.getElementById('timerOverlay').classList.add('hidden');
+}
+
+// ============================================================
+// Toast
+// ============================================================
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+// ============================================================
+// 渲染：训练 Tab
+// ============================================================
+function renderWorkout() {
+  const today = getToday();
+  const workout = workouts[today] || { exercises: [] };
+  const section = document.getElementById('tab-workout');
+  document.getElementById('headerTitle').textContent = '今日训练';
+  document.getElementById('headerDate').textContent = formatDate(today);
+
+  if (workout.exercises.length === 0) {
+    section.innerHTML = `
+      <div class="empty">
+        <span class="icon">🏋️</span>
+        <span class="msg">今天还没开始训练</span>
+        <button class="btn btn-primary" style="margin-top:16px;max-width:240px" onclick="openPicker()">开始训练</button>
+        ${hasHistory() ? `<button class="btn btn-outline" style="margin-top:8px;max-width:240px" onclick="loadLastWorkout()">使用上次的训练计划</button>` : ''}
+      </div>`;
+    return;
+  }
+
+  let html = `<button class="btn btn-outline btn-sm" style="margin-bottom:12px" onclick="openPicker()">+ 添加动作</button>`;
+  workout.exercises.forEach((ex, ei) => {
+    const doneSets = ex.sets.length;
+    html += `<div class="exercise-card open" id="ex-${ei}">
+      <div class="head" onclick="toggleExercise(${ei})">
+        <span class="name">${ex.name}</span>
+        <span class="meta">${doneSets} 组 · ${ex.maxWeight || 0}kg</span>
+      </div>
+      <div class="body">`;
+    ex.sets.forEach((s, si) => {
+      html += `<div class="set-row">
+        <span class="idx">#${si + 1}</span>
+        <span class="val">${s.weight} kg × ${s.reps} 次</span>
+        <span class="del" onclick="deleteSet(${ei},${si});event.stopPropagation()">✕</span>
+      </div>`;
+    });
+    html += `<div class="set-input-row">
+      <input class="w" type="text" inputmode="decimal" placeholder="重量kg" id="weight-${ei}" value="${ex.lastWeight || ''}">
+      <input class="r" type="text" inputmode="numeric" placeholder="次数" id="reps-${ei}">
+      <button class="btn-done" onclick="addSet(${ei})">完成</button>
+    </div></div></div>`;
+  });
+
+  html += `<div style="margin-top:16px"><button class="btn btn-outline" onclick="finishWorkout()">完成今日训练</button></div>`;
+  section.innerHTML = html;
+
+  // 恢复展开状态
+  workout.exercises.forEach((ex, ei) => {
+    if (ex._collapsed) {
+      document.getElementById(`ex-${ei}`).classList.remove('open');
+    }
+  });
+}
+
+function toggleExercise(ei) {
+  const el = document.getElementById(`ex-${ei}`);
+  if (el) el.classList.toggle('open');
+  const today = getToday();
+  if (workouts[today]?.exercises[ei]) {
+    workouts[today].exercises[ei]._collapsed = !el.classList.contains('open');
+    saveWorkouts(workouts);
+  }
+}
+
+function addSet(ei) {
+  const wEl = document.getElementById(`weight-${ei}`);
+  const rEl = document.getElementById(`reps-${ei}`);
+  const w = parseFloat(wEl.value);
+  const r = parseInt(rEl.value);
+  if (!w || !r || w <= 0 || r <= 0) { showToast('请输入有效的重量和次数'); return; }
+
+  const today = getToday();
+  if (!workouts[today]) workouts[today] = { exercises: [] };
+
+  const ex = workouts[today].exercises[ei];
+  ex.sets.push({ weight: w, reps: r, time: Date.now() });
+  ex.lastWeight = w;
+  // 更新最大重量
+  let maxW = 0;
+  ex.sets.forEach(s => { if (s.weight > maxW) maxW = s.weight; });
+  ex.maxWeight = maxW;
+  saveWorkouts(workouts);
+
+  // 找这个动作的默认休息时间
+  const exDef = EXERCISE_LIBRARY.find(e => e.id === ex.id);
+  const restSec = exDef ? exDef.rest : 90;
+
+  renderWorkout();
+  startTimer(restSec, ex.name);
+}
+
+function deleteSet(ei, si) {
+  const today = getToday();
+  workouts[today].exercises[ei].sets.splice(si, 1);
+  saveWorkouts(workouts);
+  renderWorkout();
+}
+
+function hasHistory() {
+  // 检查是否有历史训练记录
+  return Object.keys(workouts).some(k => {
+    const w = workouts[k];
+    return w.exercises && w.exercises.length > 0;
+  });
+}
+
+function loadLastWorkout() {
+  const dates = Object.keys(workouts).filter(k => {
+    return workouts[k].exercises && workouts[k].exercises.length > 0;
+  }).sort().reverse();
+  if (dates.length === 0) return;
+
+  const last = workouts[dates[0]];
+  const today = getToday();
+  workouts[today] = {
+    exercises: last.exercises.map(ex => ({
+      id: ex.id,
+      name: ex.name,
+      category: ex.category,
+      sets: [],
+      lastWeight: ex.lastWeight,
+      maxWeight: 0,
+      _collapsed: false
+    }))
+  };
+  saveWorkouts(workouts);
+  renderWorkout();
+  showToast('已加载上次训练计划');
+}
+
+function finishWorkout() {
+  const today = getToday();
+  const w = workouts[today];
+  if (!w || !w.exercises.some(e => e.sets.length > 0)) {
+    showToast('还没记录任何训练数据');
+    return;
+  }
+  showToast('今天的训练完成！');
+  switchTab('history');
+}
+
+// ============================================================
+// 渲染：日历 Tab
+// ============================================================
+function renderCalendar() {
+  document.getElementById('headerTitle').textContent = '训练日历';
+  document.getElementById('headerDate').textContent = `${calendarYear}年`;
+
+  const section = document.getElementById('tab-calendar');
+  const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const today = getToday();
+  const [ty, tm, td] = today.split('-').map(Number);
+
+  let html = `<div class="cal-nav">
+    <button onclick="changeMonth(-1)">◀</button>
+    <span class="month">${calendarYear}年 ${calendarMonth + 1}月</span>
+    <button onclick="changeMonth(1)">▶</button>
+  </div>`;
+
+  html += `<div class="cal-grid">`;
+  ['日','一','二','三','四','五','六'].forEach(d => {
+    html += `<span class="day-hdr">${d}</span>`;
+  });
+
+  for (let i = 0; i < firstDay; i++) html += `<span class="day other"></span>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${calendarYear}-${String(calendarMonth + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasWorkout = workouts[ds] && workouts[ds].exercises.some(e => e.sets.length > 0);
+    const isToday = calendarYear === ty && calendarMonth === tm && d === td;
+    html += `<div class="day${isToday ? ' today' : ''}" onclick="openDay('${ds}')">
+      ${d}${hasWorkout ? '<span class="dot"></span>' : ''}
+    </div>`;
+  }
+  html += `</div>`;
+
+  if (selectedDay) {
+    html += `<div class="day-detail" id="dayDetail">`;
+    const sw = workouts[selectedDay];
+    if (sw && sw.exercises.length > 0) {
+      html += `<h4 style="margin-bottom:10px">${formatDate(selectedDay)}</h4>`;
+      sw.exercises.forEach(ex => {
+        html += `<div class="ex-summary"><span>${ex.name}</span><span class="sets">${ex.sets.length}组 · ${ex.sets.map(s => s.weight+'kg×'+s.reps).join(' / ')}</span></div>`;
+      });
+    } else {
+      html += `<div class="empty"><span class="msg">当天没有训练记录</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  section.innerHTML = html;
+}
+
+function changeMonth(delta) {
+  calendarMonth += delta;
+  if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+  if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+  selectedDay = null;
+  renderCalendar();
+}
+
+function openDay(ds) {
+  selectedDay = ds;
+  renderCalendar();
+  document.getElementById('dayDetail')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================================
+// 渲染：记录 Tab
+// ============================================================
+function renderHistory() {
+  document.getElementById('headerTitle').textContent = '训练记录';
+  document.getElementById('headerDate').textContent = '';
+
+  const section = document.getElementById('tab-history');
+  const dates = Object.keys(workouts).filter(k => {
+    const w = workouts[k];
+    return w.exercises && w.exercises.some(e => e.sets.length > 0);
+  }).sort().reverse();
+
+  if (dates.length === 0) {
+    section.innerHTML = `<div class="empty"><span class="icon">📊</span><span class="msg">还没有训练记录</span></div>`;
+    return;
+  }
+
+  // 按月份分组
+  const groups = {};
+  dates.forEach(d => {
+    const month = d.slice(0, 7);
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(d);
+  });
+
+  let html = '';
+  Object.keys(groups).sort().reverse().forEach(month => {
+    html += `<div class="history-group"><h3>${month.replace('-','年')}月</h3>`;
+    groups[month].forEach(d => {
+      const w = workouts[d];
+      const totalSets = w.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+      const exNames = w.exercises.map(e => e.name).join('、');
+      html += `<div class="history-item" id="hist-${d}" onclick="toggleHistory('${d}')">
+        <div class="top">
+          <span class="date-label">${formatDate(d)}</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="summary">${exNames} · ${totalSets} 组</div>
+        <div class="history-detail">`;
+      w.exercises.forEach(ex => {
+        html += `<div class="ex-summary"><span>${ex.name}</span><span class="sets">${ex.sets.length}组 · ${ex.sets.map(s => s.weight+'kg×'+s.reps).join(' / ')}</span></div>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+  });
+
+  section.innerHTML = html;
+}
+
+function toggleHistory(d) {
+  const el = document.getElementById(`hist-${d}`);
+  if (el) el.classList.toggle('open');
+}
+
+// ============================================================
+// 动作选择器
+// ============================================================
+let pickerSelection = [];
+function openPicker() {
+  pickerSelection = [];
+  const today = getToday();
+  const existing = workouts[today]?.exercises || [];
+  pickerSelection = existing.map(e => e.id);
+
+  const sheet = document.getElementById('pickerSheet');
+  let html = `<h3>选择训练动作</h3>`;
+  CATEGORIES.forEach(cat => {
+    const exs = EXERCISE_LIBRARY.filter(e => e.category === cat);
+    html += `<div class="category"><div class="cat-name">${cat}</div>`;
+    exs.forEach(ex => {
+      const sel = pickerSelection.includes(ex.id);
+      html += `<div class="ex-option${sel ? ' selected' : ''}" id="pick-${ex.id}" onclick="togglePick('${ex.id}')">
+        <span class="check">${sel ? '✓' : ''}</span>
+        <span class="ex-name">${ex.name}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `<div style="display:flex;gap:10px;padding:12px 0">
+    <button class="btn btn-outline" onclick="closePicker()">取消</button>
+    <button class="btn btn-primary" style="flex:1" onclick="confirmPicker()">确认 (${pickerSelection.length})</button>
+  </div>`;
+  sheet.innerHTML = html;
+  document.getElementById('pickerOverlay').style.display = 'flex';
+}
+
+function togglePick(exId) {
+  const idx = pickerSelection.indexOf(exId);
+  if (idx >= 0) pickerSelection.splice(idx, 1);
+  else pickerSelection.push(exId);
+
+  const el = document.getElementById(`pick-${exId}`);
+  const checkEl = el.querySelector('.check');
+  if (idx >= 0) { el.classList.remove('selected'); checkEl.textContent = ''; }
+  else { el.classList.add('selected'); checkEl.textContent = '✓'; }
+
+  const confirmBtn = document.querySelector('#pickerSheet .btn-primary');
+  if (confirmBtn) confirmBtn.textContent = `确认 (${pickerSelection.length})`;
+}
+
+function closePicker() {
+  document.getElementById('pickerOverlay').style.display = 'none';
+}
+
+function confirmPicker() {
+  if (pickerSelection.length === 0) { closePicker(); return; }
+  const today = getToday();
+  if (!workouts[today]) workouts[today] = { exercises: [] };
+
+  // 保留已有动作的数据，移除未被选中的，新增被选中的
+  const existing = workouts[today].exercises;
+  const newExercises = pickerSelection.map(exId => {
+    const old = existing.find(e => e.id === exId);
+    if (old) return old;
+    const def = EXERCISE_LIBRARY.find(e => e.id === exId);
+    return { id: exId, name: def.name, category: def.category, sets: [], lastWeight: '', maxWeight: 0, _collapsed: false };
+  });
+  workouts[today].exercises = newExercises;
+  saveWorkouts(workouts);
+  closePicker();
+  renderWorkout();
+}
+
+// 点击 overlay 背景关闭
+document.getElementById('pickerOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closePicker();
+});
+
+// ============================================================
+// Tab 切换
+// ============================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`nav button[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById('tab-workout').style.display = tab === 'workout' ? '' : 'none';
+  document.getElementById('tab-calendar').style.display = tab === 'calendar' ? '' : 'none';
+  document.getElementById('tab-history').style.display = tab === 'history' ? '' : 'none';
+
+  if (tab === 'workout') renderWorkout();
+  else if (tab === 'calendar') renderCalendar();
+  else if (tab === 'history') renderHistory();
+}
+
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// ============================================================
+// 键盘快捷键（手表/外接键盘用）
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (currentTab === 'workout' && e.key === 'Enter') {
+    // 找到最后一个动作的输入框，触发完成
+    const today = getToday();
+    const w = workouts[today];
+    if (w) {
+      const lastIdx = w.exercises.length - 1;
+      const repsEl = document.getElementById(`reps-${lastIdx}`);
+      if (repsEl && document.activeElement === repsEl) {
+        addSet(lastIdx);
+      }
+    }
+  }
+});
+
+// ============================================================
+// 初始化
+// ============================================================
+function init() {
+  // 注册 Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  renderWorkout();
+}
+
+init();
+</script>
+</body>
+</html>
